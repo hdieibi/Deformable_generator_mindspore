@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ### 数据集
 
-使用老师发在群里的1Kfaces数据，分为train和eval，放在data文件夹下就可以。数据文件夹结构为
+使用老师发在群里的1Kfaces数据，分为train(900张)和eval（100张），放在data文件夹下就可以。数据文件夹结构为
 
 ```python
 data
