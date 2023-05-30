@@ -1,6 +1,7 @@
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import ops
+import random
 
 
 class Trainer:
@@ -35,14 +36,13 @@ class Trainer:
         return loss, x_hat, app, geo
 
     def rand_sample(self, num_sample):
-        sample_zapp = ops.randn([num_sample, self.model.za_dim])
-        sample_zgeo = ops.randn([num_sample, self.model.zg_dim])
-        sample_x, sample_app, _ = self.model.sample(sample_zapp, sample_zgeo)
+        sample_x, sample_app, _ = self.model.sample(num_sample)
         sample = {
             'sample_img': sample_x,
             'sample_app': sample_app
         }
         return sample
+
 
     def sample_one_dim(self):
         npica = int(self.model.za_dim / 10)
@@ -52,22 +52,46 @@ class Trainer:
         (1) Plot the appearance basis functions
         '''
         app_samples = []
+        zgeop = ops.zeros((self.model.batchsz, self.model.zg_dim))
         for pic in range(npica):
-            zgeop = ops.zeros((self.model.batchsz, self.model.zg_dim))
-            zappp = ops.zeros((self.model.batchsz, self.model.za_dim))
             for d in range(10):
-                zappp[d * 10:d * 10 + 10, pic * 10 + d] = ops.linspace(-10, 10, 10)
-            app_sample_x, _, _ = self.model.sample(zappp, zgeop)
-            app_samples.append(app_sample_x)
+                zappp = ops.zeros((self.model.batchsz, self.model.za_dim))
+                zappp[:, pic * 10 + d] = ops.linspace(-10, 10, 9)
+                app_sample_x, _, _ = self.model.deform_model.decode(zappp, zgeop)
+                app_samples.append(app_sample_x)
         '''
         (2) Plot the geometric basis functions
         '''
         geo_samples = []
         zappp = ops.zeros((self.model.batchsz, self.model.za_dim))
+        zappp = zappp - 1.
         for pic in range(npicg):
-            zgeop = ops.zeros((self.model.batchsz, self.model.zg_dim))
             for d in range(10):
-                zgeop[d * 10:d * 10 + 10, pic * 10 + d] = ops.linspace(-8, 8, 10)
-            geo_sample_x, _, _ = self.model.sample(zappp, zgeop)
-            geo_samples.append(geo_sample_x)
+                zgeop = ops.zeros((self.model.batchsz, self.model.zg_dim))
+                zgeop[:, pic * 10 + d] = ops.linspace(-8, 8, 9)
+                geo_sample_x, _, _ = self.model.deform_model.decode(zappp, zgeop)
+                geo_samples.append(geo_sample_x)
         return app_samples, geo_samples
+
+    def swap_app_geo(self):
+        source_index = random.randint(0, 899)
+        source_z_app = self.model.zapp_all[int(source_index / self.model.batchsz)][source_index%self.model.batchsz]
+        source_z_app = ops.unsqueeze(source_z_app, 0)
+        source_z_geo = self.model.zgeo_all[int(source_index / self.model.batchsz)][source_index % self.model.batchsz]
+        source_z_geo = ops.unsqueeze(source_z_geo, 0)
+
+        target_index = random.randint(0, 899)
+        target_z_app = self.model.zapp_all[int(target_index / self.model.batchsz)][target_index % self.model.batchsz]
+        target_z_app = ops.unsqueeze(target_z_app, 0)
+        target_z_geo = self.model.zgeo_all[int(target_index / self.model.batchsz)][target_index % self.model.batchsz]
+        target_z_geo = ops.unsqueeze(target_z_geo, 0)
+
+        source_img, _, _ = self.model.deform_model.decode(source_z_app, source_z_geo)
+        target_img, _, _ = self.model.deform_model.decode(target_z_app, target_z_geo)
+        swapped_source_img, _, _ = self.model.deform_model.decode(source_z_app, target_z_geo)
+        swapped_target_img, _, _ = self.model.deform_model.decode(target_z_app, source_z_geo)
+
+        all_img1 = ops.cat([source_img[0], target_img[0]], axis=2)
+        all_img2 = ops.cat([swapped_source_img[0], swapped_target_img[0]], axis=2)
+        all_img = ops.cat([all_img1, all_img2], axis=1)
+        return all_img

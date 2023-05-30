@@ -4,7 +4,7 @@ from mindspore import ops
 
 
 class GeoNet(nn.Cell):
-    def __init__(self, zg_dim=64, nchan=3, imgsize=64, batchsize=9, kersize=[3,3,5,5], chb=16, fmd=[4,8,16,32,64], stride=[2, 2, 2, 2]):
+    def __init__(self, zg_dim=64, nchan=3, imgsize=64, batchsize=9, kersize=[3,3,5,5], chb=16, fmd=[4,8,16,32,64], stride=[1, 2, 2, 1]):
         super(GeoNet, self).__init__()
         self.zg_dim = zg_dim
         self.nchan = nchan
@@ -29,7 +29,7 @@ class GeoNet(nn.Cell):
             nn.ReLU(),
             nn.Conv2dTranspose(self.channelg[3], 2, kersize[3], stride[3]),
             nn.Tanh(),
-            # nn.Upsample(size=(self.imgsize, self.imgsize), mode='bilinear'),
+            nn.Upsample(size=(self.imgsize, self.imgsize), mode='bilinear'),
         )
 
     def init_geo(self):
@@ -41,8 +41,9 @@ class GeoNet(nn.Cell):
         return grid
 
     def construct(self, z):
+        bs = z.shape[0]
         hc = self.dense(z)
-        hc = reshape(hc, [self.bs, self.channelg[0], self.fmd[0], self.fmd[0]])
+        hc = reshape(hc, [bs, self.channelg[0], self.fmd[0], self.fmd[0]])
         gdfq = self.deconv2d(hc)
         gdf = gdfq + self.base_geo
         gdf = permute(gdf, (0, 2, 3, 1))
