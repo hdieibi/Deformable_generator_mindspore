@@ -160,3 +160,5 @@ cython_debug/
 .idea/
 /1.ipynb
 /data/1Kfaces/
+/log/
+/evaluate/
