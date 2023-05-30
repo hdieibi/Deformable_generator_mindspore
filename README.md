@@ -1,4 +1,4 @@
-# Mindspore Implemented Deformable_generator
+# A Mindspore Implementation of Deformable_generator
 哈工程2023模式识别和数字图像处理的最后一次课程作业
 
 时间有限，模型没有调好，所以复现出来的效果不好，重构图像还行，采样生成质量比较差。重构和采样生成的图像示例如imgs文件夹所示。
