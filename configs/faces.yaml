@@ -1,0 +1,23 @@
+data_path: '/media/lz/新加卷/projects/PatternRcongnition/Project2/data/1Kfaces'
+batch_size: &batch_size 9
+max_epoch: 1000
+milestones: [40, 100, 300, 700, 1000]
+lr: [1.e-3, 5.e-4, 2.e-4, 1.e-4, 2.e-5]
+za_dim: &za_dim 64
+zg_dim: &zg_dim 64
+sigmap: &sigmap 0.1
+N: &N 900
+imgsize: &imgsize 64
+app_params:
+  batchsz: *batch_size
+  imgsize: *imgsize
+geo_params:
+  batchsz: *batch_size
+  imgsize: *imgsize
+dfg_params:
+  batchsz: *batch_size
+  za_dim: *za_dim
+  zg_dim: *zg_dim
+  sigmap: *sigmap
+  N: *N
+  delta: 0.15
